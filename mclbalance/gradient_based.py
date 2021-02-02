@@ -81,6 +81,7 @@ if __name__ == '__main__':
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=1e-3)
     balancer.set_optimizer_sess(optimizer, session)
     balancer.add_regularization(a, 1e-2)
+    balancer.compile()
     alpha = balancer.balance(
         init_alpha=a,
         target_distribution=ones
