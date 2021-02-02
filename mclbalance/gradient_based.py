@@ -16,6 +16,8 @@ class GradientBalancer(Balancer):
         self._alpha = tf.Variable(tf.ones_like(self._custom_alpha))
         self._set_alpha_op = tf.assign(self._alpha, self._custom_alpha)
         self._target_distribution = tf.placeholder(dtype='float32', shape=[1, self._n_classes])
+
+    def compile(self):
         self.__build_loss()
 
     def __build_loss(self):
@@ -71,6 +73,7 @@ class GradientBalancer(Balancer):
 if __name__ == '__main__':
     H = np.random.randint(low=0, high=2, size=(10, 5))
     a = np.abs(np.random.randn(1, 10) * 50)
+    print('initial a:', a)
     ones = np.ones((1, 5), dtype='float32')
 
     balancer = GradientBalancer(H)
