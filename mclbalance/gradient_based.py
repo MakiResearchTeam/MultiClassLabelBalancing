@@ -19,6 +19,12 @@ class GradientBalancer(Balancer):
 
     def compile(self):
         self.__build_loss()
+        assert hasattr(self, '_optimizer')
+        self._minimize_op = self._optimizer.minimize(
+            loss=self._loss,
+            var_list=[self._alpha]
+        )
+        self._sess.run(tf.variables_initializer(self._optimizer.variables() + [self._alpha]))
 
     def __build_loss(self):
         cardinality = tf.reduce_sum(self._alpha)
@@ -30,13 +36,7 @@ class GradientBalancer(Balancer):
     # noinspection PyAttributeOutsideInit
     def set_optimizer_sess(self, optimizer: tf.train.Optimizer, session: tf.Session):
         self._optimizer = optimizer
-        self._minimize_op = self._optimizer.minimize(
-            loss=self._loss,
-            var_list=[self._alpha]
-        )
-
         self._sess = session
-        self._sess.run(tf.variables_initializer(self._optimizer.variables() + [self._alpha]))
 
     def set_alpha(self, alpha):
         assert hasattr(self, '_sess'), 'No session is set.'
