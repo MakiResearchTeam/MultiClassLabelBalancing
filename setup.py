@@ -2,7 +2,7 @@ from setuptools import setup
 import setuptools
 
 setup(
-    name='mclbalance',
+    name='mlbalance',
     packages=setuptools.find_packages(),
     version='0.1',
     description='',
