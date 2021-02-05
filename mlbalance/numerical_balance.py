@@ -35,7 +35,7 @@ class NumericalBalancer(Balancer):
 
         self._build_loss(regularization_type, reg_scale)
         self._build_gradient()
-        self._build_jacobain()
+        self._build_jacobian()
 
     def _build_loss(self, regularization_type, reg_scale):
         class_frequencies = tf.matmul(self._alpha, self._H) / tf.reduce_sum(self._alpha)
@@ -59,7 +59,7 @@ class NumericalBalancer(Balancer):
     def _build_gradient(self):
         self._grad = tf.gradients(self._loss, self._alpha)[0]
 
-    def _build_jacobain(self):
+    def _build_jacobian(self):
         self._jac = compute_jacobian(self._grad, self._alpha)
 
     def compute_gradient(self, alpha):
