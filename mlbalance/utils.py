@@ -3,6 +3,7 @@ import pandas as pd
 
 
 def estimate_p_classes(alpha, H):
+    # returns pi
     return alpha.dot(H) / np.sum(alpha)
 
 

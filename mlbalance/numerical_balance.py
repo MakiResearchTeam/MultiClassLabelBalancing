@@ -23,6 +23,7 @@ class NumericalBalancer(Balancer):
         """
         H = np.asarray(H, dtype='float32')
         init_alpha = np.asarray(init_alpha, dtype='float32').reshape(1, -1)
+        # [1, n_vectors] * [n_vectors, n_classes] = [1, n_classes] == pi
         assert len(H.shape) == 2
         assert H.shape[0] == init_alpha.shape[1]
         self._H = tf.convert_to_tensor(H)
@@ -40,8 +41,8 @@ class NumericalBalancer(Balancer):
         self._build_jacobian()
 
     def _build_loss(self, regularization_type, reg_scale):
-        class_frequencies = tf.matmul(self._alpha, self._H) / tf.reduce_sum(self._alpha)
-        freq_diff = tf.reduce_mean((class_frequencies - tf.ones_like(class_frequencies))**2)
+        class_frequencies = tf.matmul(self._alpha, self._H) / tf.reduce_sum(self._alpha)  # pi
+        # freq_diff = tf.reduce_mean((class_frequencies - tf.ones_like(class_frequencies))**2)
         freq_diff = tf.reduce_mean(-tf.log(class_frequencies))
 
         self._loss = freq_diff + reg_scale * self._regularization(regularization_type)
@@ -53,6 +54,17 @@ class NumericalBalancer(Balancer):
             return tf.reduce_mean(exp)
 
         elif regularization_type == NumericalBalancer.REG_MAE:
+            # .1 alpha > init_alpha
+            # init_alpha = 100
+            # alpha = 200
+            # reg = ((400 - 100)/100)^2 = 1
+
+            # .1 alpha < init_alpha
+            # init_alpha = 100
+            # alpha = 50
+            # reg = ((50 - 100)/100)^2 = 1/4
+
+            # reg = ((400 - 100))^2 / 100 =
             squared_diff_normalized = tf.square((self._alpha - self._init_alpha)) / self._init_alpha
             return tf.reduce_mean(squared_diff_normalized)
 
@@ -77,6 +89,9 @@ class NumericalBalancer(Balancer):
             raise ValueError(f'Unknown regularization type. Received {regularization_type}')
 
     def _build_gradient(self):
+        # l -> min
+        # grad(l) = 0
+        #
         self._grad = tf.gradients(self._loss, self._alpha)[0]
 
     def _build_jacobian(self):
@@ -144,7 +159,7 @@ if __name__ == '__main__':
     print('\n\n')
     test(NumericalBalancer.REG_GAUSS, 0.0023)
     print('\n\n')
-    test(NumericalBalancer.REG_RATIO, 0.1)
+    test(NumericalBalancer.REG_RATIO, 0.20)
     print('\n\n')
-    test(NumericalBalancer.REG_MAE_NORM, 0.1)
+    test(NumericalBalancer.REG_MAE_NORM, 0.0000001)
 

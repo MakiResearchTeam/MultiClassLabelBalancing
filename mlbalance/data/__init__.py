@@ -29,6 +29,7 @@ def load_data():
     groups = pd.read_csv(data_path).to_numpy()[:, 1]
 
     binary_vecs = compute_cardinalities(binary_vecs, groups)
+    # [[lambda, alpha]]
     return binary_vecs, groups
 
 
