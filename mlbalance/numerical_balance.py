@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from scipy.optimize import fsolve, root, OptimizeResult
+from scipy.optimize import fsolve
 
 from .core import Balancer
 from .tf_jacobian import compute_jacobian
@@ -9,8 +9,10 @@ from .tf_jacobian import compute_jacobian
 class NumericalBalancer(Balancer):
     REG_GAUSS = 'gaussian'
     REG_MAE = 'mae'
+    REG_MAE_NORM = 'mae_norm'
+    REG_RATIO = 'ratio'
 
-    def __init__(self, H, init_alpha, session, reg_scale=0.001, regularization_type=REG_GAUSS):
+    def __init__(self, H, init_alpha, session, reg_scale=0.0007, regularization_type=REG_MAE):
         """
         Parameters
         ----------
@@ -40,6 +42,7 @@ class NumericalBalancer(Balancer):
     def _build_loss(self, regularization_type, reg_scale):
         class_frequencies = tf.matmul(self._alpha, self._H) / tf.reduce_sum(self._alpha)
         freq_diff = tf.reduce_mean((class_frequencies - tf.ones_like(class_frequencies))**2)
+        freq_diff = tf.reduce_mean(-tf.log(class_frequencies))
 
         self._loss = freq_diff + reg_scale * self._regularization(regularization_type)
 
@@ -50,9 +53,26 @@ class NumericalBalancer(Balancer):
             return tf.reduce_mean(exp)
 
         elif regularization_type == NumericalBalancer.REG_MAE:
-            squared_diff_normalized = tf.square(self._alpha - self._init_alpha)
+            squared_diff_normalized = tf.square((self._alpha - self._init_alpha)) / self._init_alpha
             return tf.reduce_mean(squared_diff_normalized)
 
+        elif regularization_type == NumericalBalancer.REG_MAE_NORM:
+            diff1 = tf.square((self._alpha - self._init_alpha) / self._init_alpha)
+            diff2 = tf.square((self._alpha - self._init_alpha) / self._alpha)
+            return tf.reduce_mean(diff1 + diff2)
+
+        elif regularization_type == NumericalBalancer.REG_RATIO:
+            ratio_diff = tf.where(
+                self._alpha > self._init_alpha,
+                self._alpha / self._init_alpha - 1.,
+                self._init_alpha / self._alpha - 1.
+            )
+            ratio_diff = tf.where(
+                ratio_diff > 1.0,
+                ratio_diff**2,
+                tf.abs(ratio_diff)
+            )
+            return tf.reduce_mean(ratio_diff)
         else:
             raise ValueError(f'Unknown regularization type. Received {regularization_type}')
 
@@ -76,7 +96,7 @@ class NumericalBalancer(Balancer):
             feed_dict={
                 self._alpha: np.asarray(alpha, dtype='float32').reshape(1, -1)
             }
-        ).T
+        )
 
     def balance(self, init_alpha):
         return np.round(fsolve(self.compute_gradient, x0=init_alpha, xtol=1e-3, fprime=self.compute_jacobian))
@@ -101,17 +121,30 @@ if __name__ == '__main__':
         alpha = balancer.balance(
             init_alpha=a
         )
+        print('reg type:', reg_type)
         print('initial a:', a)
         print('balanced a:', alpha)
         print()
         print('initial frequencies:', estimate_p_classes(a, H).round(2))
         print('balanced frequencies:', estimate_p_classes(alpha, H).round(2))
         print()
-        mult = (alpha / a)
-        mult = np.where(mult < 1, -1 / mult, mult).round(2)
+        mult_source = (alpha / a)
+        mult = np.where(mult_source < 1, -1 / mult_source, mult_source).round(2)
         print('multiples:', mult)
+        print('balance_score:', np.mean(mult * mult))
         print(balancer.compute_gradient(alpha))
 
-    test(NumericalBalancer.REG_MAE, 0.0007)
+        scale = np.min(mult_source)
+        alpha /= scale
+
+        from .utils import save_cardinalities
+        save_cardinalities(reg_type + '.csv', alpha, H)
+
+    test(NumericalBalancer.REG_MAE, 0.0220)
     print('\n\n')
     test(NumericalBalancer.REG_GAUSS, 0.0023)
+    print('\n\n')
+    test(NumericalBalancer.REG_RATIO, 0.1)
+    print('\n\n')
+    test(NumericalBalancer.REG_MAE_NORM, 0.1)
+
