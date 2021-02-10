@@ -97,7 +97,7 @@ class HCScanner:
 
         Returns
         -------
-        list
+        dict { filename: mask }
             Masks that contain the classes.
         """
         chosen_labelset_ids = []
@@ -105,9 +105,9 @@ class HCScanner:
             if has_classes(labelset, classes):
                 chosen_labelset_ids.append(labelset_id)
 
-        masks = []
+        masks = {}
         for labelset_id in chosen_labelset_ids:
-            masks += self.select_masks_by_labelset_id(labelset_id)
+            masks.update(self.select_masks_by_labelset_id(labelset_id))
 
         return masks
 
@@ -122,15 +122,21 @@ class HCScanner:
 
         Returns
         -------
-        list
+        dict { filename: mask }
             Masks with the corresponding labelset_id.
         """
-        masks = []
+        masks = {}
         for filename, labelset_id_ in self.filename_labelsetid_d.items():
             if labelset_id_ == labelset_id:
-                masks.append(self.filename_mask_d[filename])
+                masks[filename] = self.filename_mask_d[filename]
 
         return masks
+
+    def get_class_frequencies(self):
+        labelsets = self.get_labelsets()
+        labelsets, n_masks = labelsets[:, :-1], labelsets[:, -1:]
+        freq = np.sum(labelsets * n_masks, axis=0) / np.sum(n_masks)
+        return freq
 
     def save_info(self, uniq_hvc_path, masks_hcvg_path):
         pd.DataFrame.from_dict(self.labelsetid_labelset_d, orient='index').to_csv(uniq_hvc_path)
