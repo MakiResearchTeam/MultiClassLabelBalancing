@@ -37,18 +37,20 @@ class HCScanner:
         else:
             self.masks = masks
         self.num_classes = num_classes
+        self.__scan()
 
     def __load_masks(self, paths):
         self.masks = {}
         for path in paths:
             self.masks[path] = cv2.imread(path)
 
-    def scan(self):
+    def __scan(self):
         # { Mask's name : HC vector group }
         self.masks_hcvg = {}
         # { HC vector group : number of vectors }
         self.hcv_groups = {}
-        self.uniq_hcv = {}
+        # { labelset_id: labelset }
+        self.unique_labelsets = {}
         for mask_name, mask in self.masks.items():
             classes = np.unique(mask)
             hc_vec = to_hc_vec(self.num_classes, classes)
@@ -57,7 +59,7 @@ class HCScanner:
             self.masks_hcvg[mask_name] = hc_id
             self.hcv_groups[hc_id] = 1 + self.hcv_groups.get(hc_id, 0)
             if self.hcv_groups[hc_id] == 1:
-                self.uniq_hcv[hc_id] = hc_vec
+                self.unique_labelsets[hc_id] = hc_vec
 
     def get_labelsets(self):
         """
@@ -69,7 +71,7 @@ class HCScanner:
         """
         labelsets = []
         for labelset_id, n_copies in self.hcv_groups.items():
-            labelset = to_hc_vec(self.num_classes, labelset_id)
+            labelset = self.unique_labelsets[labelset_id]
             labelset = np.concatenate([labelset, [n_copies]], axis=0)
             labelsets.append(labelset)
         return np.asarray(labelsets)
@@ -87,6 +89,6 @@ class HCScanner:
         np.save(path, labelsets)
 
     def save_info(self, uniq_hvc_path, masks_hcvg_path):
-        pd.DataFrame.from_dict(self.uniq_hcv, orient='index').to_csv(uniq_hvc_path)
+        pd.DataFrame.from_dict(self.unique_labelsets, orient='index').to_csv(uniq_hvc_path)
         pd.DataFrame.from_dict(self.masks_hcvg, orient='index', columns=['hcvg']).to_csv(masks_hcvg_path)
         print('Saved!')
