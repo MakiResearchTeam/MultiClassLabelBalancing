@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import absolute_import
-from makiflow.augmentation.segmentation.augment_ops import ElasticAugment, AffineAugment, FlipAugment, RotateAugment
-from makiflow.augmentation.segmentation.data_provider import Data
-from makiflow.augmentation.segmentation.image_mask_cutter import ImageCutter
-from makiflow.augmentation.segmentation.balancing import *
+from .augment_ops import ElasticAugment, AffineAugment, FlipAugment, RotateAugment
+from .data_provider import Data
+from .image_mask_cutter import ImageCutter
+from .balancing import *

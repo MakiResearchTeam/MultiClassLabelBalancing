@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import absolute_import
-from makiflow.augmentation.segmentation.balancing.hc_scanner import HCScanner
-from makiflow.augmentation.segmentation.balancing.gd_balancer import GDBalancer
-from makiflow.augmentation.segmentation.balancing.gdbb_builder import GD2BBuilder
+from .hc_scanner import HCScanner
+from .gd_balancer import GDBalancer
+from .gdbb_builder import GD2BBuilder
 del absolute_import
