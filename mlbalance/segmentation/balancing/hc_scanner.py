@@ -69,7 +69,7 @@ class HCScanner:
         """
         labelsets = []
         for labelset_id, n_copies in self.hcv_groups.items():
-            labelset = to_hc_vec(labelset_id, self.num_classes)
+            labelset = to_hc_vec(self.num_classes, labelset_id)
             labelset = np.concatenate([labelset, [n_copies]], axis=0)
             labelsets.append(labelset)
         return np.asarray(labelsets)
