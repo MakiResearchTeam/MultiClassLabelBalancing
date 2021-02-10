@@ -41,3 +41,20 @@ def get_unique(arr):
             uniq_vecs += [vec]
     return np.array(uniq_vecs), uniq
 
+
+def has_classes(labelset, classes):
+    """
+    Parameters
+    ----------
+    labelset : ndarray
+        A labelset.
+    classes : list
+        A list of classes. Examples: [0, 4, 5].
+
+    Returns
+    -------
+    bool
+        True if all classes are present in the labelset.
+    """
+    labelset = np.asarray(labelset).reshape(-1)
+    return np.prod(labelset[classes] == 1) == 1
