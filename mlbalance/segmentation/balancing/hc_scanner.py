@@ -54,12 +54,12 @@ class HCScanner:
         for filename, mask in self.filename_mask_d.items():
             classes = np.unique(mask)
             labelset = to_hc_vec(self.num_classes, classes)
-            labelset_id = hcv_to_num(labelset)
+            labelset_id = int(hcv_to_num(labelset))
 
             self.filename_labelsetid_d[filename] = labelset_id
             self.labelsetid_nimages_d[labelset_id] = 1 + self.labelsetid_nimages_d.get(labelset_id, 0)
             if self.labelsetid_nimages_d[labelset_id] == 1:
-                self.labelsetid_labelset_d[labelset_id] = labelset
+                self.labelsetid_labelset_d[labelset_id] = labelset.tolist()
 
     def get_labelsets(self):
         """
@@ -138,7 +138,7 @@ class HCScanner:
         freq = np.sum(labelsets * n_masks, axis=0) / np.sum(n_masks)
         return freq
 
-    def save_info(self, uniq_hvc_path, masks_hcvg_path):
-        save_json(self.labelsetid_labelset_d, uniq_hvc_path)
-        save_json(self.filename_labelsetid_d, masks_hcvg_path)
+    def save_info(self, labelsetid_labelset_path, filename_labelsetid_path):
+        save_json(self.labelsetid_labelset_d, labelsetid_labelset_path)
+        save_json(self.filename_labelsetid_d, filename_labelsetid_path)
         print('Saved!')
