@@ -14,7 +14,7 @@ def save_cardinalities(path, card, H):
     cardinalities = np.round(cardinalities).astype(np.int32)
     config = {}
     for i in range(len(cardinalities)):
-        config[hcv_to_num(H[i])] = cardinalities[i]
+        config[int(hcv_to_num(H[i]))] = int(cardinalities[i])
     save_json(config, path)
 
 
