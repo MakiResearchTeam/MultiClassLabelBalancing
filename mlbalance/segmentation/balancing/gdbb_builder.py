@@ -19,40 +19,45 @@ from __future__ import absolute_import
 import pandas as pd
 import cv2
 from .. import ElasticAugment, Data
+from .utils import load_json
 import os
 
 
 class GD2BBuilder:
-    def __init__(self, path_to_hc_list, path_to_balance_config, path_to_mi, resize=None):
+    def __init__(self, mask_labelsetid, balance_config, masks_images, resize=None):
         """
         Parameters
         ----------
-        path_to_hc_list : str
-            Path to the HC list.
-        path_to_balance_config : str
-            Path to the balance config.
-        path_to_mi : str
-            Path to csv file contains pairs { path_to_mask : path_to_image }.
+        mask_labelsetid : str or dict
+            Json containing pairs { masks_name: labelset_id }
+        balance_config : str or dict
+            Json containing pairs { labelset_id: n_copies }
+        masks_images : str or dict
+            Json containing pairs { path_to_mask : path_to_image }.
 
         resize : tuple
             Images will be resized accordingly while loading.
         """
-        self._hc_list = pd.DataFrame.from_csv(path_to_hc_list)
-        self._balance_c = pd.DataFrame.from_csv(path_to_balance_config)
-        self._load_masks_images(path_to_mi, resize)
+        self._maskname_labelsetid_d = mask_labelsetid if isinstance(mask_labelsetid, dict) else load_json(mask_labelsetid)
+        self._balance_config = balance_config if isinstance(balance_config, dict) else load_json(balance_config)
+
+        masks_images = masks_images if isinstance(masks_images, dict) else load_json(masks_images)
+        self._resize = resize
+        self._load_masks_images(masks_images, resize)
+
         self._group_images_masks_by_id()
         self._aug = None
 
     # noinspection PyAttributeOutsideInit
-    def _load_masks_images(self, path_to_mi, resize):
+    def _load_masks_images(self, masks_images: dict, resize):
         print('Loading masks and images.')
-        IMAGE = 'image'
-        mi = pd.DataFrame.from_csv(path_to_mi)
-
         self._images_masks = {}
-        for mask_name, row in mi.iterrows():
-            image = cv2.imread(row[IMAGE])
+        for mask_name, image_name in masks_images.items():
+            image = cv2.imread(image_name)
+            assert image is not None
             mask = cv2.imread(mask_name)
+            assert mask is not None
+
             if resize is not None:
                 image = cv2.resize(image, resize, interpolation=cv2.INTER_CUBIC)
                 mask = cv2.resize(mask, resize, interpolation=cv2.INTER_NEAREST)
@@ -62,17 +67,16 @@ class GD2BBuilder:
 
     def _group_images_masks_by_id(self):
         print('Group masks and images by their ids.')
-        HCVG = 'hcvg'
-        self._groups = {}
-        for row_ind, row in self._hc_list.iterrows():
-            self._groups[row[HCVG]] = [self._images_masks[row_ind]] + self._groups.get(row[HCVG], [])
-        for hcvg in self._groups:
-            print(f'{hcvg} cardinality is {len(self._groups[hcvg])}')
+        self._labelset_ids = {}
+        for maskname, labelset_id in self._maskname_labelsetid_d.items():
+            self._labelset_ids[labelset_id] = [self._images_masks[maskname]] + self._labelset_ids.get(labelset_id, [])
+        for labelset_id in self._labelset_ids:
+            print(f'{labelset_id} cardinality is {len(self._labelset_ids[labelset_id])}')
         print('Finished.')
 
     # noinspection PyAttributeOutsideInit
     def set_elastic_aug_params(
-            self, img_shape,
+            self, img_shape=None,
             alpha=500, std=8, noise_invert_scale=5,
             img_inter='linear', mask_inter='nearest', border_mode='reflect'
     ):
@@ -82,7 +86,11 @@ class GD2BBuilder:
         self._aug_img_inter = img_inter
         self._aug_mask_inter = mask_inter
         self._aug_border_mode = border_mode
-        self._img_shape = img_shape
+        if self._resize is not None:
+            self._img_shape = self._resize
+        else:
+            self._img_shape = img_shape
+        assert self._img_shape is not None
 
     def _create_augment(self):
         self._aug = ElasticAugment(
@@ -102,25 +110,25 @@ class GD2BBuilder:
             Path to the folder where the results of the data processing will be saved.
             Example: '.../balanced_batch'.
         """
-        for hcv_group in self._groups:
-            imgs, masks = self._balance_group(hcv_group)
-            self._save_imgs(imgs, masks, hcv_group, path_to_save)
-            print(f'{hcv_group} ready')
+        for labelset_id in self._labelset_ids:
+            imgs, masks = self._balance_group(labelset_id)
+            self._save_imgs(imgs, masks, labelset_id, path_to_save)
+            print(f'{labelset_id} ready')
 
-    def _balance_group(self, hcv_group):
-        print(f'Balancing group {hcv_group}...')
+    def _balance_group(self, labelset_id):
+        print(f'Balancing group {labelset_id}...')
         imgs, masks = [], []
         img_ind = 0
         aug_updates = 0
-        hcvg_cardinality = self._balance_c['0'][hcv_group]
-        while hcvg_cardinality > 0:
-            im, mask = self._groups[hcv_group][img_ind]
+        labelset_ncopies = self._balance_config[labelset_id]
+        while labelset_ncopies > 0:
+            im, mask = self._labelset_ids[labelset_id][img_ind]
             im, mask = self._augment(im, mask)
             imgs.append(im)
             masks.append(mask)
-            hcvg_cardinality -= 1
+            labelset_ncopies -= 1
             img_ind += 1
-            if img_ind == len(self._groups[hcv_group]):
+            if img_ind == len(self._labelset_ids[labelset_id]):
                 img_ind = 0
                 self._create_augment()
                 aug_updates += 1

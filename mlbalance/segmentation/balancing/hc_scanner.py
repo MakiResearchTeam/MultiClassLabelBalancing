@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import absolute_import
-from .utils import hcv_to_num, to_hc_vec, has_classes
+from .utils import hcv_to_num, to_hc_vec, has_classes, save_json
 import numpy as np
 import cv2
 import pandas as pd
@@ -139,6 +139,6 @@ class HCScanner:
         return freq
 
     def save_info(self, uniq_hvc_path, masks_hcvg_path):
-        pd.DataFrame.from_dict(self.labelsetid_labelset_d, orient='index').to_csv(uniq_hvc_path)
-        pd.DataFrame.from_dict(self.filename_labelsetid_d, orient='index', columns=['hcvg']).to_csv(masks_hcvg_path)
+        save_json(self.labelsetid_labelset_d, uniq_hvc_path)
+        save_json(self.filename_labelsetid_d, masks_hcvg_path)
         print('Saved!')

@@ -16,6 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
+import json
 
 
 def hcv_to_num(bin_vec):
@@ -58,3 +59,14 @@ def has_classes(labelset, classes):
     """
     labelset = np.asarray(labelset).reshape(-1)
     return np.prod(labelset[classes] == 1) == 1
+
+
+def save_json(d: dict, path):
+    with open(path, 'w') as f:
+        f.write(json.dumps(d, indent=4))
+
+
+def load_json(path) -> dict:
+    with open(path, 'r') as f:
+        s = f.read()
+    return json.loads(s)
