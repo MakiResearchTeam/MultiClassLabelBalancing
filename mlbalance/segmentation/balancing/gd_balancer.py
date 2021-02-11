@@ -19,7 +19,7 @@ from __future__ import absolute_import
 import tensorflow as tf
 import numpy as np
 import pandas as pd
-from makiflow.augmentation.segmentation.balancing.utils import hcv_to_num
+from .utils import hcv_to_num
 
 
 def vec_len(vec):
