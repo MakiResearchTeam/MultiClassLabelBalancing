@@ -45,7 +45,7 @@ class NumericalBalancer(Balancer):
     def _build_loss(self, regularization_type, reg_scale):
         class_frequencies = tf.matmul(self._alpha, self._H) / tf.reduce_sum(self._alpha)  # pi
         # freq_diff = tf.reduce_mean((class_frequencies - tf.ones_like(class_frequencies))**2)
-        freq_diff = tf.reduce_mean(tf.log(class_frequencies)**2)
+        freq_diff = tf.reduce_mean(tf.log(class_frequencies))
 
         self._loss = freq_diff + reg_scale * self._regularization(regularization_type)
 
