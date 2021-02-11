@@ -90,7 +90,7 @@ class NumericalBalancer(Balancer):
         elif regularization_type == NumericalBalancer.REG_EXP:
             exp1 = tf.exp(self._alpha / self._init_alpha)
             exp2 = tf.exp(self._init_alpha / self._alpha)
-            return tf.reduce_mean(exp1 + exp2)
+            return tf.reduce_mean((exp1 + exp2)**2)
 
         elif regularization_type == NumericalBalancer.REG_SIG:
             b = 3  # 3
