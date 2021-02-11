@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import absolute_import
-from makiflow.augmentation.base import Augmentor
+from .base import Augmentor
 
 
 class Data(Augmentor):

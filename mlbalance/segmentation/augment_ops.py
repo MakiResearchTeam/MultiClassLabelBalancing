@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import absolute_import
-from makiflow.augmentation.base import AugmentOp, Augmentor
+from .base import AugmentOp, Augmentor
 from scipy.ndimage import gaussian_filter
 import numpy as np
 import cv2
