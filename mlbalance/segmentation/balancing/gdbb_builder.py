@@ -18,7 +18,7 @@
 from __future__ import absolute_import
 import pandas as pd
 import cv2
-from makiflow.augmentation.segmentation import ElasticAugment, Data
+from .. import ElasticAugment, Data
 import os
 
 
