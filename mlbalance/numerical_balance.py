@@ -113,6 +113,14 @@ class NumericalBalancer(Balancer):
             }
         )
 
+    def compute_loss(self, alpha):
+        return self._session.run(
+            self._loss,
+            feed_dict={
+                self._alpha: np.asarray(alpha, dtype='float32').reshape(1, -1)
+            }
+        )
+
     def balance(self, init_alpha):
         return np.round(fsolve(self.compute_gradient, x0=init_alpha, xtol=1e-3, fprime=self.compute_jacobian))
 
