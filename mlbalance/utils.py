@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import json
 
 
 def estimate_p_classes(alpha, H):
@@ -14,7 +15,7 @@ def save_cardinalities(path, card, H):
     config = {}
     for i in range(len(cardinalities)):
         config[hcv_to_num(H[i])] = cardinalities[i]
-    pd.DataFrame.from_dict(config, orient='index').to_csv(path)
+    save_json(config, path)
 
 
 def hcv_to_num(bin_vec):
@@ -22,3 +23,14 @@ def hcv_to_num(bin_vec):
     for i in range(len(bin_vec)):
         num += int(2**i * bin_vec[i])
     return num
+
+
+def save_json(d: dict, path):
+    with open(path, 'w') as f:
+        f.write(json.dumps(d, indent=4))
+
+
+def load_json(path) -> dict:
+    with open(path, 'r') as f:
+        s = f.read()
+    return json.loads(s)
