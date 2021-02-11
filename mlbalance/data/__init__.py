@@ -1,7 +1,7 @@
 import pandas as pd
 import pathlib
 import os
-from makiflow.augmentation.segmentation.balancing.utils import hcv_to_num
+from ..segmentation.balancing.utils import hcv_to_num
 import numpy as np
 
 
