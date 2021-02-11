@@ -138,7 +138,6 @@ class HCScanner:
         freq = np.sum(labelsets * n_masks, axis=0) / np.sum(n_masks)
         return freq
 
-    def save_info(self, labelsetid_labelset_path, filename_labelsetid_path):
-        save_json(self.labelsetid_labelset_d, labelsetid_labelset_path)
+    def save_info(self, filename_labelsetid_path):
         save_json(self.filename_labelsetid_d, filename_labelsetid_path)
         print('Saved!')
