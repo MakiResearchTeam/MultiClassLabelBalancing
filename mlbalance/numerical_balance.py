@@ -11,6 +11,8 @@ class NumericalBalancer(Balancer):
     REG_MAE = 'mae'
     REG_MAE_NORM = 'mae_norm'
     REG_RATIO = 'ratio'
+    REG_EXP = 'REG_EXP'
+    REG_SIG = 'REG_SIG'
 
     def __init__(self, H, init_alpha, session, reg_scale=0.0007, regularization_type=REG_MAE):
         """
@@ -85,6 +87,20 @@ class NumericalBalancer(Balancer):
                 tf.abs(ratio_diff)
             )
             return tf.reduce_mean(ratio_diff)
+        elif regularization_type == NumericalBalancer.REG_EXP:
+            exp1 = tf.exp(self._alpha / self._init_alpha)
+            exp2 = tf.exp(self._init_alpha / self._alpha)
+            return tf.reduce_mean(exp1 + exp2)
+
+        elif regularization_type == NumericalBalancer.REG_SIG:
+            b = 3  # 3
+            a = 10
+            #             scale = 1e5
+            x = self._alpha / self._init_alpha
+            sig1 = 1 / (1 + tf.exp(-a * (x - b)))
+            sig2 = 1 / (1 + tf.exp(a * (x - 1 / b)))
+            return tf.reduce_sum((sig1 + sig2))
+
         else:
             raise ValueError(f'Unknown regularization type. Received {regularization_type}')
 
