@@ -43,11 +43,18 @@ class NumericalBalancer(Balancer):
         self._build_jacobian()
 
     def _build_loss(self, regularization_type, reg_scale):
+        self._build_main_loss()
+        self._build_reg_loss(regularization_type)
+        self._loss = self._main_loss + reg_scale * self._reg_loss
+
+    def _build_main_loss(self):
         class_frequencies = tf.matmul(self._alpha, self._H) / tf.reduce_sum(self._alpha)  # pi
         # freq_diff = tf.reduce_mean((class_frequencies - tf.ones_like(class_frequencies))**2)
         freq_diff = tf.reduce_mean(-tf.log(class_frequencies))
+        self._main_loss = freq_diff
 
-        self._loss = freq_diff + reg_scale * self._regularization(regularization_type)
+    def _build_reg_loss(self, regularization_type):
+        self._reg_loss = self._regularization(regularization_type)
 
     def _regularization(self, regularization_type):
         if regularization_type == NumericalBalancer.REG_GAUSS:
@@ -132,6 +139,22 @@ class NumericalBalancer(Balancer):
     def compute_loss(self, alpha):
         return self._session.run(
             self._loss,
+            feed_dict={
+                self._alpha: np.asarray(alpha, dtype='float32').reshape(1, -1)
+            }
+        )
+
+    def compute_main_loss(self, alpha):
+        return self._session.run(
+            self._main_loss,
+            feed_dict={
+                self._alpha: np.asarray(alpha, dtype='float32').reshape(1, -1)
+            }
+        )
+
+    def compute_reg_loss(self, alpha):
+        return self._session.run(
+            self._reg_loss,
             feed_dict={
                 self._alpha: np.asarray(alpha, dtype='float32').reshape(1, -1)
             }
