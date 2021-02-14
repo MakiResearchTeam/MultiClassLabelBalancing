@@ -24,7 +24,7 @@ import os
 
 
 class GD2BBuilder:
-    def __init__(self, mask_labelsetid, balance_config, masks_images, resize=None):
+    def __init__(self, mask_labelsetid, balance_config, masks_images, resize=None, use_augment=True):
         """
         Parameters
         ----------
@@ -40,6 +40,7 @@ class GD2BBuilder:
         """
         self._maskname_labelsetid_d = mask_labelsetid if isinstance(mask_labelsetid, dict) else load_json(mask_labelsetid)
         self._balance_config = balance_config if isinstance(balance_config, dict) else load_json(balance_config)
+        self.use_augment = use_augment
 
         masks_images = masks_images if isinstance(masks_images, dict) else load_json(masks_images)
         self._resize = resize
@@ -70,6 +71,7 @@ class GD2BBuilder:
         self._labelset_ids = {}
         for maskname, labelset_id in self._maskname_labelsetid_d.items():
             self._labelset_ids[labelset_id] = [self._images_masks[maskname]] + self._labelset_ids.get(labelset_id, [])
+
         for labelset_id in self._labelset_ids:
             print(f'{labelset_id} cardinality is {len(self._labelset_ids[labelset_id])}')
         print('Finished.')
@@ -115,6 +117,15 @@ class GD2BBuilder:
             self._save_imgs(imgs, masks, labelset_id, path_to_save)
             print(f'{labelset_id} ready')
 
+    def _save_imgs(self, imgs, masks, hcv_group, path_to_save):
+        masks_path = os.path.join(path_to_save, 'masks')
+        imgs_path = os.path.join(path_to_save, 'images')
+        os.makedirs(masks_path, exist_ok=True)
+        os.makedirs(imgs_path, exist_ok=True)
+        for i, (img, mask) in enumerate(zip(imgs, masks)):
+            cv2.imwrite(masks_path+f'/{hcv_group}_{i}.bmp', mask)
+            cv2.imwrite(imgs_path + f'/{hcv_group}_{i}.bmp', img)
+
     def _balance_group(self, labelset_id):
         print(f'Balancing group {labelset_id}...')
         imgs, masks = [], []
@@ -123,7 +134,8 @@ class GD2BBuilder:
         labelset_ncopies = self._balance_config[labelset_id]
         while labelset_ncopies > 0:
             im, mask = self._labelset_ids[labelset_id][img_ind]
-            im, mask = self._augment(im, mask)
+            if self.use_augment:
+                im, mask = self._augment(im, mask)
             imgs.append(im)
             masks.append(mask)
             labelset_ncopies -= 1
@@ -137,15 +149,6 @@ class GD2BBuilder:
         print(f'Augmentor updated {aug_updates} times.')
         print(f'Finished.')
         return imgs, masks
-
-    def _save_imgs(self, imgs, masks, hcv_group, path_to_save):
-        masks_path = os.path.join(path_to_save, 'masks')
-        imgs_path = os.path.join(path_to_save, 'images')
-        os.makedirs(masks_path, exist_ok=True)
-        os.makedirs(imgs_path, exist_ok=True)
-        for i, (img, mask) in enumerate(zip(imgs, masks)):
-            cv2.imwrite(masks_path+f'/{hcv_group}_{i}.bmp', mask)
-            cv2.imwrite(imgs_path + f'/{hcv_group}_{i}.bmp', img)
 
     def _augment(self, im, mask):
         if self._aug is None:
