@@ -43,6 +43,7 @@ class HCScanner:
         self.filename_mask_d = {}
         for path in paths:
             self.filename_mask_d[path] = cv2.imread(path)
+            assert self.filename_mask_d[path] is not None, f'Could not load mask with path={path}'
 
     def __scan(self):
         # { filename : labelset_id }

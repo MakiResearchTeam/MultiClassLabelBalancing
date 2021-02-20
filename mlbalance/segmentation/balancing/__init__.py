@@ -17,6 +17,7 @@
 
 from __future__ import absolute_import
 from .hc_scanner import HCScanner
+from .hc_scanner_binary import HCScannerBinary
 from .gd_balancer import GDBalancer
 from .gdbb_builder import GD2BBuilder
 del absolute_import
