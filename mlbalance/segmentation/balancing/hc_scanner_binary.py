@@ -51,7 +51,7 @@ class HCScannerBinary:
         for path in paths:
             for binary_mask_path in glob(join(path, '*')):
                 filename = binary_mask_path.split('/')[-1]
-                class_id = filename.split('.')[0]
+                class_id = int(filename.split('.')[0])
                 binary_mask = cv2.imread(binary_mask_path)
                 assert binary_mask is not None, f'Could not load mask with name={binary_mask_path}'
                 label_tensor = self.filename_labeltensor_d.get(path, None)
