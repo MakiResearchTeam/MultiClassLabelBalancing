@@ -42,9 +42,10 @@ class Balancer:
         return loss + self._reg_scale * self.regularization(alpha)
 
     def regularization(self, alpha):
-        ratio1 = torch.mean((torch.exp(alpha) / self._init_alpha - 1.) ** 2)
-        ratio2 = torch.mean((self._init_alpha / torch.exp(alpha) - 1.) ** 2)
-        return ratio1 + ratio2
+        ratio = torch.exp(alpha) / self._init_alpha
+        ratio = ratio / torch.min(ratio)
+        reg = torch.mean((ratio - 1.)**2)
+        return reg
 
     def compute_gradient(self, alpha, preprocess=True):
         if preprocess:
