@@ -74,7 +74,7 @@ class Newton(Optimizer):
 
         # --- Initialize momentum and perform the first iteration
         momentum = self.compute_update(x0, grad_fn, hess_fn)
-        x = x0 + self.step_size * momentum
+        x = x0 - self.step_size * momentum
 
         self.print_info(0, fn(x), self.step_size * momentum)
 
