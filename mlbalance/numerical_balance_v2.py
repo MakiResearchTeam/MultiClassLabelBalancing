@@ -38,12 +38,12 @@ class Balancer:
         # [1, n_vectors] * [n_vectors, n_classes] = [1, n_classes] == pi
         assert len(H.shape) == 2
         assert H.shape[0] == init_alpha.shape[1]
-        self._H = torch.tensor(H, dtype=torch.float64)
+        self._H = torch.tensor(H, dtype=self._dtype_torch)
         self._n_vectors = H.shape[0]
         self._n_classes = H.shape[1]
 
         self._init_alpha_np = init_alpha
-        self._init_alpha = torch.tensor(init_alpha, dtype=torch.float64)
+        self._init_alpha = torch.tensor(init_alpha, dtype=self._dtype_torch)
         self._reg_scale = 1e-4
 
     def to_tensor(self, val):
