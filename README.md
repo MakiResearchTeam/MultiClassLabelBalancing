@@ -1,4 +1,4 @@
-- pip install git+https://github.com/MakiResearchTeam/MultiClassLabelBalancing.git
+- pip install --upgrade git+https://github.com/MakiResearchTeam/MultiClassLabelBalancing.git
 
 ## General steps
 

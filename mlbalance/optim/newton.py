@@ -1,5 +1,5 @@
 import numpy as np
-from .optim import Optimizer
+from mlbalance.optim import Optimizer
 
 
 class Newton(Optimizer):
@@ -25,12 +25,12 @@ class Newton(Optimizer):
             Information about the optimization process (the function value) will be printed
             after each `print_period` iteration. If -1, no info will be printed.
         """
-        self.it = 500
+        self.it = it
         self.hess_update_period = hess_update_period
         self.eig_correction = eig_correction
         self.step_size = step_size
         self.mu = mu
-        self.print_period = -1
+        self.print_period = print_period
         self.inv_hessian_cache = None
         self.reset()
 
@@ -72,12 +72,20 @@ class Newton(Optimizer):
         """
         self.reset()
 
-        # Initialize momentum and perform the first iteration
+        # --- Initialize momentum and perform the first iteration
         momentum = self.compute_update(x0, grad_fn, hess_fn)
         x = x0 + self.step_size * momentum
-        for i in range(1, self.it):
-            update = self.compute_update(x, grad_fn, hess_fn)
-            momentum = momentum * self.mu + update * (1 - self.mu)
-            x = x + self.step_size * momentum
 
+        self.print_info(0, fn(x), self.step_size * momentum)
+
+        for it in range(1, self.it):
+            update = self.compute_update(x, grad_fn, hess_fn, it)
+            momentum = momentum * self.mu + update * (1 - self.mu)
+            x = x - self.step_size * momentum
+
+            self.print_info(it, fn(x), self.step_size * momentum)
         return x
+
+    def print_info(self, it, fn_val, delta_x):
+        if it % self.print_period == 0 and self.print_period > 0:
+            print(f'it={it}, fn(x)={fn_val}, abs(delta_x)={np.linalg.norm(delta_x)}')
