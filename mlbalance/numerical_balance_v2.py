@@ -16,8 +16,8 @@ def newton_method() -> Optimizer:
 
 
 class BalancerV2:
-    DEFAULT_REG1 = 0.007
-    DEFAULT_REG2 = 0.007
+    DEFAULT_REG1 = 0.5
+    DEFAULT_REG2 = 0.001
 
     def __init__(self, H, init_alpha, device='cpu', dtype='float64'):
         """
