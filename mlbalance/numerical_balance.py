@@ -72,7 +72,7 @@ class Balancer:
         h_dist = alpha / torch.sum(alpha)
         class_frequencies = torch.matmul(h_dist, self._H)
 
-        weights = 1. / (class_frequencies + self._eps) * torch.sign(h_dist)
+        weights = 1. / (class_frequencies + self._eps) * torch.sign(class_frequencies)
         loss = weights * -torch.log(class_frequencies + self._eps) / torch.sum(weights)
         loss = torch.sum(loss)
 
