@@ -18,7 +18,7 @@ def newton_method() -> Optimizer:
 class Balancer:
     DEFAULT_REG_SCALE = 0.007
 
-    def __init__(self, H, init_alpha, eps=0.0, device='cpu', dtype='float64'):
+    def __init__(self, H, init_alpha, eps=0.0, device='cpu', dtype='float64', vectorize_hess=False):
         """
         Implements the loss function from the paper and provides methods for minimizing it.
 
@@ -35,6 +35,7 @@ class Balancer:
         self._device = device
         self._dtype = dtype
         self._dtype_torch = torch.float64 if dtype == 'float64' else torch.float32
+        self._vectorize_hess = vectorize_hess
 
         H = np.asarray(H, dtype=dtype)
         init_alpha = np.asarray(init_alpha, dtype=dtype).reshape(1, -1)
@@ -107,7 +108,7 @@ class Balancer:
             beta = params
 
         beta = self.to_tensor(beta)
-        hessian = torch.autograd.functional.hessian(self.loss, inputs=beta)
+        hessian = torch.autograd.functional.hessian(self.loss, inputs=beta, vectorize=self._vectorize_hess)
         return hessian.cpu().detach().numpy()
 
     def compute_loss(self, params, is_alpha=True):
