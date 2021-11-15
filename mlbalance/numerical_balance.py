@@ -89,38 +89,38 @@ class Balancer:
         params = np.asarray(params, dtype=self._dtype)
         if is_alpha:
             sigma = params / self._init_alpha_np
-            beta = np.log(sigma + self._eps.numpy())
+            beta = np.log(sigma + self._eps.cpu().numpy())
         else:
             beta = params
 
         beta = self.to_tensor(beta)
         loss = self.loss(beta)
         loss.backward()
-        return beta.grad.numpy()
+        return beta.grad.cpu().numpy()
 
     def compute_hessian(self, params, is_alpha=True):
         params = np.asarray(params, dtype=self._dtype)
         if is_alpha:
             sigma = params / self._init_alpha_np
-            beta = np.log(sigma + self._eps.numpy())
+            beta = np.log(sigma + self._eps.cpu().numpy())
         else:
             beta = params
 
         beta = self.to_tensor(beta)
         hessian = torch.autograd.functional.hessian(self.loss, inputs=beta)
-        return hessian.detach().numpy()
+        return hessian.cpu().detach().numpy()
 
     def compute_loss(self, params, is_alpha=True):
         params = np.asarray(params, dtype=self._dtype)
         if is_alpha:
             sigma = params / self._init_alpha_np
-            beta = np.log(sigma + self._eps.numpy())
+            beta = np.log(sigma + self._eps.cpu().numpy())
         else:
             beta = params
 
         beta = self.to_tensor(beta)
         loss = self.loss(beta)
-        return loss.detach().numpy()
+        return loss.cpu().detach().numpy()
 
     def balance_scipy(self, reg_scale=DEFAULT_REG_SCALE, method='Newton-CG', options=None):
         self.set_reg_scale(reg_scale)
