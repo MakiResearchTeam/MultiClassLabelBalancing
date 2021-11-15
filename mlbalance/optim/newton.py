@@ -1,9 +1,11 @@
 import numpy as np
+from tqdm import tqdm
+
 from mlbalance.optim import Optimizer
 
 
 class Newton(Optimizer):
-    def __init__(self, it=500, hess_update_period=10, eig_correction=2.0, step_size=1.0, mu=0.5, print_period=-1):
+    def __init__(self, it=500, hess_update_period=10, eig_correction=2.0, step_size=1.0, mu=0.5, print_period=-1, use_tqdm=False):
         """
         Parameters
         ----------
@@ -31,6 +33,7 @@ class Newton(Optimizer):
         self.step_size = step_size
         self.mu = mu
         self.print_period = print_period
+        self.use_tqdm = use_tqdm
         self.inv_hessian_cache = None
         self.reset()
 
@@ -78,7 +81,10 @@ class Newton(Optimizer):
 
         self.print_info(0, fn(x), self.step_size * momentum)
 
-        for it in range(1, self.it):
+        iterator = range(1, self.it)
+        if self.use_tqdm:
+            iterator = tqdm(iterator)
+        for it in iterator:
             update = self.compute_update(x, grad_fn, hess_fn, it)
             momentum = momentum * self.mu + update * (1 - self.mu)
             x = x - self.step_size * momentum
