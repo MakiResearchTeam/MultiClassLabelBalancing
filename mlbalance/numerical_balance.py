@@ -18,9 +18,9 @@ def newton_method() -> Optimizer:
 class Balancer:
     DEFAULT_REG_SCALE = 0.007
 
-    def __init__(self, H, init_alpha, device='cpu', dtype='float64'):
+    def __init__(self, H, init_alpha, eps=0.0, device='cpu', dtype='float64'):
         """
-        Does minimization of the objective function using Newton method.
+        Implements the loss function from the paper and provides methods for minimizing it.
 
         Parameters
         ----------
@@ -28,6 +28,9 @@ class Balancer:
             Matrix of unique binary vectors lambda_i
         init_alpha : ndarray of shape [n_vectors]
             Vector of initial alpha parameters.
+        eps : float
+            Being added to class frequencies to avoid NaN values in logarithm
+            when some frequencies equal to zero.
         """
         self._device = device
         self._dtype = dtype
@@ -38,25 +41,31 @@ class Balancer:
         # [1, n_vectors] * [n_vectors, n_classes] = [1, n_classes] == pi
         assert len(H.shape) == 2
         assert H.shape[0] == init_alpha.shape[1]
-        self._H = torch.tensor(H, dtype=self._dtype_torch)
+        self._H = torch.tensor(H, dtype=self._dtype_torch, device=self._device)
         self._n_vectors = H.shape[0]
         self._n_classes = H.shape[1]
 
         self._init_alpha_np = init_alpha
-        self._init_alpha = torch.tensor(init_alpha, dtype=self._dtype_torch)
-        self._reg_scale = 1e-4
+        self._init_alpha = torch.tensor(init_alpha, dtype=self._dtype_torch, device=self._device)
+        self._reg_scale = torch.tensor(1e-4, dtype=self._dtype_torch, device=self._device)
+
+        self._eps = torch.tensor(eps, dtype=self._dtype_torch, device=self._device)
 
     def to_tensor(self, val):
         val = np.asarray(val, self._dtype).reshape(-1)
         val = torch.tensor(val, dtype=self._dtype_torch, requires_grad=True)
-        val.to(self._device)
+        val = val.to(self._device)
         return val
 
     def set_reg_scale(self, reg_scale):
-        self._reg_scale = reg_scale
+        self._reg_scale = torch.tensor(reg_scale, dtype=self._dtype_torch, device=self._device)
 
     def set_device(self, device):
         self._device = device
+        self._reg_scale = self._reg_scale.to(device)
+        self._init_alpha = self._init_alpha.to(device)
+        self._eps = self._eps.to(device)
+        self._H = self._H.to(device)
 
     def loss(self, beta):
         alpha = self._init_alpha * torch.exp(beta)
@@ -64,7 +73,7 @@ class Balancer:
         class_frequencies = torch.matmul(h_dist, self._H)
 
         weights = 1. / class_frequencies
-        loss = weights * -torch.log(class_frequencies) / torch.sum(weights)
+        loss = weights * -torch.log(class_frequencies + self._eps) / torch.sum(weights)
         loss = torch.sum(loss)
 
         return loss + self._reg_scale * self.regularization(alpha)
