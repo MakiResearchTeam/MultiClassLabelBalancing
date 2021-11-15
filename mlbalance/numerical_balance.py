@@ -80,7 +80,7 @@ class Balancer:
 
     def regularization(self, alpha):
         weights = self._init_alpha / torch.sum(self._init_alpha)
-        ratio = alpha / (self._init_alpha + self._eps) * torch.sign(self._init_alpha)
+        ratio = alpha / (self._init_alpha + self._eps)
         ratio = ratio / torch.min(ratio)
         reg = torch.sum((ratio - 1.) ** 2 * weights)
         return reg
@@ -89,7 +89,7 @@ class Balancer:
         params = np.asarray(params, dtype=self._dtype)
         if is_alpha:
             sigma = params / self._init_alpha_np
-            beta = np.log(sigma)
+            beta = np.log(sigma + self._eps.numpy())
         else:
             beta = params
 
@@ -102,7 +102,7 @@ class Balancer:
         params = np.asarray(params, dtype=self._dtype)
         if is_alpha:
             sigma = params / self._init_alpha_np
-            beta = np.log(sigma)
+            beta = np.log(sigma + self._eps.numpy())
         else:
             beta = params
 
@@ -114,7 +114,7 @@ class Balancer:
         params = np.asarray(params, dtype=self._dtype)
         if is_alpha:
             sigma = params / self._init_alpha_np
-            beta = np.log(sigma)
+            beta = np.log(sigma + self._eps.numpy())
         else:
             beta = params
 
