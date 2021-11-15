@@ -54,8 +54,7 @@ class Balancer:
 
     def to_tensor(self, val):
         val = np.asarray(val, self._dtype).reshape(-1)
-        val = torch.tensor(val, dtype=self._dtype_torch, requires_grad=True)
-        val = val.to(self._device)
+        val = torch.tensor(val, dtype=self._dtype_torch, requires_grad=True, device=self._device)
         return val
 
     def set_reg_scale(self, reg_scale):
