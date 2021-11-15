@@ -80,7 +80,7 @@ class Balancer:
 
     def regularization(self, alpha):
         weights = self._init_alpha / torch.sum(self._init_alpha)
-        ratio = alpha / self._init_alpha
+        ratio = alpha / (self._init_alpha + self._eps) * torch.sign(self._init_alpha)
         ratio = ratio / torch.min(ratio)
         reg = torch.sum((ratio - 1.) ** 2 * weights)
         return reg
